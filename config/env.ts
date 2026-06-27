@@ -40,7 +40,7 @@ const config: Config = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "1h",
   jwtCookieName: process.env.JWT_COOKIE_NAME || "my_mapper_token",
   dbHost: process.env.DB_HOST || "localhost",
-  dbPort: Number(process.env.DB_PORT) || 5432,
+  dbPort: Number(process.env.DB_PORT) || 5431,
   dbUser: process.env.DB_USER || "postgres",
   dbPassword: process.env.DB_PASSWORD || "",
   dbName: process.env.DB_NAME || "postgres",

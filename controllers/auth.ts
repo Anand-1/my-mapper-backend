@@ -2,6 +2,8 @@ import crypto from "crypto";
 import type { Middleware } from "koa";
 import config from "../config/env";
 import { signAuthToken } from "../utils/jwt";
+import { addUser, findUserByEmail } from "../utils/userStore";
+import { hashPassword } from "../utils/password";
 
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -148,6 +150,49 @@ export const me: Middleware = async (ctx) => {
       email: ctx.state.user.email,
       name: ctx.state.user.name,
       picture: ctx.state.user.picture,
+    },
+  };
+};
+
+export const register: Middleware = async (ctx) => {
+  const { email, name, password } = (ctx.request as unknown as { body?: Record<string, string> }).body ?? {};
+
+  if (!email || !name || !password) {
+    ctx.status = 400;
+    ctx.body = { error: "Name, email, and password are required." };
+    return;
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const existingUser = await findUserByEmail(normalizedEmail);
+
+  if (existingUser) {
+    ctx.status = 409;
+    ctx.body = { error: "A user with this email already exists." };
+    return;
+  }
+
+  const passwordHash = hashPassword(password);
+  const user = await addUser({
+    email: normalizedEmail,
+    name: name.trim(),
+    passwordHash,
+    createdAt: new Date().toISOString(),
+  });
+
+  const authToken = signAuthToken({
+    email: user.email,
+    name: user.name,
+    picture: "",
+  });
+
+  setAuthCookie(ctx, authToken);
+
+  ctx.status = 201;
+  ctx.body = {
+    user: {
+      email: user.email,
+      name: user.name,
     },
   };
 };
