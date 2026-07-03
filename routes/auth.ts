@@ -7,5 +7,6 @@ export default (router: Router): void => {
   router.get("/auth/google/callback", authController.googleCallback);
   router.get("/auth/me", authenticateJwt, authController.me);
   router.post("/auth/register", authController.register);
+  router.post("/auth/login", authController.login);
   router.post("/auth/logout", authController.logout);
 };

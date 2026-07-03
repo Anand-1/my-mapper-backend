@@ -4,6 +4,7 @@ import config from "../config/env";
 import { signAuthToken } from "../utils/jwt";
 import { addUser, findUserByEmail } from "../utils/userStore";
 import { hashPassword } from "../utils/password";
+import bcrypt from 'bcrypt';
 
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -145,11 +146,46 @@ export const googleCallback: Middleware = async (ctx) => {
 };
 
 export const me: Middleware = async (ctx) => {
+  console.log("ctx.state.user:", ctx.state.user);
   ctx.body = {
     user: {
       email: ctx.state.user.email,
       name: ctx.state.user.name,
       picture: ctx.state.user.picture,
+    },
+  };
+};
+
+export const login: Middleware = async (ctx) => {
+  const { email, password } = (ctx.request as unknown as { body?: Record<string, string> }).body ?? {};
+  if (!email || !password) {
+    ctx.status = 400;
+    ctx.body = { error: "Email and password are required." };
+    return;
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await findUserByEmail(normalizedEmail);
+
+  if (!user || !user.passwordHash || !verifyPassword(password, user.passwordHash)) {
+    ctx.status = 401;
+    ctx.body = { error: "Invalid email or password." };
+    return;
+  }
+
+  const authToken = signAuthToken({
+    email: user.email,
+    name: user.name,
+    picture: "",
+  });
+
+  setAuthCookie(ctx, authToken);
+
+  ctx.status = 200;
+  ctx.body = {
+    user: {
+      email: user.email,
+      name: user.name,
     },
   };
 };
@@ -201,3 +237,17 @@ export const logout: Middleware = async (ctx) => {
   clearAuthCookie(ctx);
   ctx.status = 204;
 };
+async function verifyPassword(password: string, passwordHash: string) {
+    try {
+    if (!password || !passwordHash) {
+      return false;
+    }
+    // bcrypt.compare handles timing attacks and extracts the salt automatically
+    const isMatch = await bcrypt.compare(password, passwordHash);
+    return isMatch;
+  } catch (error) {
+    console.error('Password verification error:', error);
+    return false; // Fail securely on error
+  }
+}
+
