@@ -43,7 +43,7 @@ const config: Config = {
   dbPort: Number(process.env.DB_PORT) || 5431,
   dbUser: process.env.DB_USER || "postgres",
   dbPassword: process.env.DB_PASSWORD || "",
-  dbName: process.env.DB_NAME || "postgres",
+  dbName: process.env.DB_NAME || "anandraj",
 };
 
 export default config;
