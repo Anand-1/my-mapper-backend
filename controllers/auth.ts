@@ -156,7 +156,7 @@ export const me: Middleware = async (ctx) => {
 
 export const register: Middleware = async (ctx) => {
   const { email, name, password } = (ctx.request as unknown as { body?: Record<string, string> }).body ?? {};
-
+  console.log(email, name, password);
   if (!email || !name || !password) {
     ctx.status = 400;
     ctx.body = { error: "Name, email, and password are required." };

@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-
+import { query } from "../utils/db";
 export interface LocalUserStoreItem {
   email: string;
   name: string;
@@ -10,17 +10,22 @@ export interface LocalUserStoreItem {
 
 const usersDataPath = path.join(__dirname, "..", "data", "users.json");
 
-const readUsersFile = async (): Promise<LocalUserStoreItem[]> => {
+const readUsersFile = async (user: LocalUserStoreItem): Promise<LocalUserStoreItem[]> => {
+  const { name, email, passwordHash } = user;
+  // 2. Insert user into 'users' table
   try {
-    const fileContent = await fs.readFile(usersDataPath, "utf8");
-    const parsed = JSON.parse(fileContent);
-    return Array.isArray(parsed) ? parsed : [];
+    const userResult = await query(
+      `INSERT INTO users (username, email, password_hash)
+     VALUES ($1, $2, $3)
+     RETURNING id, username, email`,
+      [name, email, passwordHash]
+    );
+
+    console.log(userResult.rows[0]);
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") {
-      return [];
-    }
-    throw err;
+    console.error(err);
   }
+  return []; // Placeholder for database query
 };
 
 const writeUsersFile = async (users: LocalUserStoreItem[]): Promise<void> => {
@@ -28,12 +33,13 @@ const writeUsersFile = async (users: LocalUserStoreItem[]): Promise<void> => {
 };
 
 export const findUserByEmail = async (email: string): Promise<LocalUserStoreItem | null> => {
-  const users = await readUsersFile();
-  return users.find((user) => user.email.toLowerCase() === email.toLowerCase()) ?? null;
+  // const users = await readUsersFile();
+  // return users.find((user) => user.email.toLowerCase() === email.toLowerCase()) ?? null;
+  return null; // Placeholder for database query
 };
 
 export const addUser = async (user: LocalUserStoreItem): Promise<LocalUserStoreItem> => {
-  const users = await readUsersFile();
+  const users = await readUsersFile(user);
 
   if (users.some((existing) => existing.email.toLowerCase() === user.email.toLowerCase())) {
     throw new Error("A user with this email already exists.");
