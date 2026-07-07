@@ -21,6 +21,11 @@ export interface Config {
   jwtSecret: string | undefined;
   jwtExpiresIn: string;
   jwtCookieName: string;
+  useSupabase: boolean;
+  supabaseUrl: string | undefined;
+  supabaseAnonKey: string | undefined;
+  supabaseServiceKey: string | undefined;
+  databaseUrl: string | undefined;
   dbHost: string;
   dbPort: number;
   dbUser: string;
@@ -39,6 +44,11 @@ const config: Config = {
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "1h",
   jwtCookieName: process.env.JWT_COOKIE_NAME || "my_mapper_token",
+  useSupabase: process.env.USE_SUPABASE === "true",
+  supabaseUrl: process.env.SUPABASE_URL,
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+  supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  databaseUrl: process.env.DATABASE_URL,
   dbHost: process.env.DB_HOST || "localhost",
   dbPort: Number(process.env.DB_PORT) || 5431,
   dbUser: process.env.DB_USER || "postgres",

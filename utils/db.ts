@@ -10,22 +10,37 @@ export interface DbResult extends QueryResult {
 
 const getPool = (): Pool => {
   if (!pool) {
-    logger.info("Creating new PostgreSQL connection pool", {
-      host: config.dbHost,
-      port: config.dbPort,
-      database: config.dbName,
-      max: 10,
-    });
+    if (config.useSupabase && config.databaseUrl) {
+      logger.info("Creating PostgreSQL connection pool using Supabase DATABASE_URL", {
+        dbUrl: config.databaseUrl.replace(/:[^@]*@/, ":***@"), // Hide password in logs
+      });
 
-    pool = new Pool({
-      host: config.dbHost,
-      port: config.dbPort,
-      user: config.dbUser,
-      password: config.dbPassword,
-      database: config.dbName,
-      max: 10,
-      idleTimeoutMillis: 30000,
-    });
+      pool = new Pool({
+        connectionString: config.databaseUrl,
+        max: 10,
+        idleTimeoutMillis: 30000,
+        ssl: {
+          rejectUnauthorized: false,
+        },
+      });
+    } else {
+      logger.info("Creating new PostgreSQL connection pool", {
+        host: config.dbHost,
+        port: config.dbPort,
+        database: config.dbName,
+        max: 10,
+      });
+
+      pool = new Pool({
+        host: config.dbHost,
+        port: config.dbPort,
+        user: config.dbUser,
+        password: config.dbPassword,
+        database: config.dbName,
+        max: 10,
+        idleTimeoutMillis: 30000,
+      });
+    }
 
     pool.on("error", (err: Error) => {
       logger.error("Unexpected error on idle database client", err);
